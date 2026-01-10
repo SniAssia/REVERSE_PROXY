@@ -1,0 +1,31 @@
+{
+    "proxy": {
+      "port": 8080
+    },
+  
+    "admin": {
+      "port": 8081
+    },
+  
+    "load_balancer": {
+      "strategy": "round-robin"
+    },
+  
+    "health_check": {
+      "interval_seconds": 30
+    },
+  
+    "timeouts": {
+      "request_seconds": 3
+    },
+  
+    "backends": [
+      {
+        "url": "http://localhost:8082"
+      },
+      {
+        "url": "http://localhost:8083"
+      }
+    ]
+  }
+  
