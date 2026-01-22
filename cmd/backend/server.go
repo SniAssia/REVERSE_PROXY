@@ -13,46 +13,63 @@ type Server struct {
 
 	mux sync.RWMutex // always adding a mutex for the lock
 }
-func (s *Server) totalbackends() int {
+// in order to avoid deadlocks and race conditions 
+func (s *Server) Backends() []*Backend {
+    s.mux.RLock()
+    defer s.mux.RUnlock()
+
+    snapshot := make([]*Backend, len(s.backends))
+    copy(snapshot, s.backends)
+    return snapshot
+}
+func (s *Server) Totalbackends() int {
 	return len(s.backends)
 }
-func (s *Server) activebackends() int {
-	return len(s.getalivebackends())
+func (s *Server) Activebackends() int {
+	return len(s.Getalivebackends())
 }
 
 
-func (s *Server) addbackend(b *Backend) {
+func (s *Server) Addbackend(b *Backend) {
 	s.mux.Lock()
 	s.backends = append(s.backends, b)
 	s.mux.Unlock()
 }
-func (s *Server) removebackend(url *url.URL) {
+func (s *Server) Removebackend(url string) bool {
 	s.mux.Lock()
+	removed := &Backend{}
 	newBackends := s.backends[:0] 
 	for _, b := range s.backends {
-		if !(b.geturl()==url.String()) { 
+		if !(b.Geturl()==url) { 
+			removed = b 
 			newBackends = append(newBackends, b)
 		}
+		removed = nil
 	}
-s.backends = newBackends
+	s.backends = newBackends
 
 	s.mux.Unlock()
+	if removed == nil {
+		return false 
+	} else {
+		return true 
+	}
 }
-func (s *Server) markbackendstatus(url *url.URL, alive bool){
+func (s *Server) Markbackendstatus(url *url.URL, alive bool){
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	for i := range s.backends{
 		if s.backends[i].url == url {
-			s.backends[i].setalive(alive)
+			s.backends[i].Setalive(alive)
 		}
 	}
 
 
 }
-func (s *Server) getalivebackends() []*Backend {
+func (s *Server) Getalivebackends() []*Backend {
 	var result []*Backend
 	for i := range s.backends{
-		if s.backends[i].isalive(){
+		if s.backends[i].Isalive(){
 			result = append(result , s.backends[i])
 		}
 	}
