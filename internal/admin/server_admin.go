@@ -19,7 +19,7 @@ type Admin struct {
 func (a *Admin) Start() error {
 	return a.server.ListenAndServe()
 }
-func newserver(address string, pool *backend.Server, loadbal *atomic.Value) *Admin{
+func Newserver(address string, pool *backend.Server, loadbal *atomic.Value) *Admin{
 	s := &Admin {
 		pool : pool,
 		loadbalancer: loadbal,

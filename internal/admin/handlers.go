@@ -4,7 +4,6 @@ import ("net/http"
     "REVERSE_PROXY/internal/loadbalancer"
     "REVERSE_PROXY/cmd/backend")
 		
-// get read only 
 
 func (s *Admin) handleStatus(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodGet {
@@ -20,14 +19,14 @@ func (s *Admin) handleStatus(w http.ResponseWriter, r *http.Request) {
 
     for _, b := range backends {
         status = append(status, Backendstatus{
-            url:   b.Geturl(),
-            alive: b.Isalive(),
-            conns: b.Activeconns(), 
+            URL:   b.Geturl(),
+            Alive: b.Isalive(),
+            Conns: b.Activeconns(), 
         })
     }
     resp := Statusresponse{
-        strategy: lb.Name(),
-        backends: status,
+        Strategy: lb.Name(),
+        Backends: status,
     }
 
     w.Header().Set("Content-Type", "application/json")
@@ -45,7 +44,7 @@ func (s *Admin) handleBackends(w http.ResponseWriter, r *http.Request) {
     switch r.Method {
 
     case http.MethodPost:
-        backend, err := backend.Newbackend(req.url)
+        backend, err := backend.Newbackend(req.URL)
         if err != nil {
             http.Error(w, "invalid backend url", http.StatusBadRequest)
             return
@@ -55,7 +54,7 @@ func (s *Admin) handleBackends(w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusCreated)
 
     case http.MethodDelete:
-        removed := s.pool.Removebackend(req.url)
+        removed := s.pool.Removebackend(req.URL)
         if !removed {
             http.Error(w, "backend not found", http.StatusNotFound)
             return
@@ -82,7 +81,7 @@ func (s *Admin) handleStrategy(w http.ResponseWriter, r *http.Request) {
 
     var lb loadbalancer.LoadBalancer
 
-    switch req.strategy {
+    switch req.Strategy {
     case "round-robin":
         lb = loadbalancer.Newround(s.pool)
     case "least-connections":

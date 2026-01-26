@@ -1,5 +1,4 @@
 package backend
-
 import (
 	"net/url"
 	"sync"
@@ -74,4 +73,8 @@ func (s *Server) Getalivebackends() []*Backend {
 		}
 	}
 	return result
+}
+func NewServer() *Server {
+    return &Server{
+    }
 }
