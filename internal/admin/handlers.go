@@ -2,7 +2,8 @@ package admin
 import ("net/http"
 		"encoding/json"
     "REVERSE_PROXY/internal/loadbalancer"
-    "REVERSE_PROXY/cmd/backend")
+    "REVERSE_PROXY/cmd/backend"
+"log")
 		
 
 func (s *Admin) handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -66,8 +67,9 @@ func (s *Admin) handleBackends(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
     }
 }
-
 func (s *Admin) handleStrategy(w http.ResponseWriter, r *http.Request) {
+    log.Println("[admin] /strategy hit")
+
     if r.Method != http.MethodPost {
         http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
         return
@@ -75,23 +77,27 @@ func (s *Admin) handleStrategy(w http.ResponseWriter, r *http.Request) {
 
     var req Strategyrequest
     if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        log.Printf("[admin] decode error: %v", err)
         http.Error(w, "invalid json", http.StatusBadRequest)
         return
     }
+    log.Printf("[admin] requested strategy: %s", req.Strategy)
 
-    var lb loadbalancer.LoadBalancer
+    var newLB loadbalancer.LoadBalancer
 
     switch req.Strategy {
     case "round-robin":
-        lb = loadbalancer.Newround(s.pool)
+        newLB = loadbalancer.Newround(s.pool)
     case "least-connections":
-        lb = loadbalancer.Newleastconn(s.pool)
+        newLB = loadbalancer.Newleastconn(s.pool)
     default:
         http.Error(w, "unknown strategy", http.StatusBadRequest)
         return
     }
 
-    s.loadbalancer.Store(lb)
-    w.WriteHeader(http.StatusOK)
-}
+    // This will not panic because lbInterface is always interface type
+    s.loadbalancer.Store(newLB)
 
+    w.WriteHeader(http.StatusOK)
+    log.Println("[admin] strategy switched successfully")
+}
